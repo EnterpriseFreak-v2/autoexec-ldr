@@ -61,6 +61,15 @@ int main(int argc, char **argv)
         error(" Error during memory allocation. The target autoexec.dol is probably too big.");
     }
 
+    for (i = 0; i < 255; i++) {
+        fseek(targetDol, 16386*i, SEEK_SET);
+        fread(dolBuf + 16386*i, 16386, sizeof(char), targetDol);
+
+        if (i*16386 >= dolSize) {
+            break;
+        }
+    }
+
     fread(dolBuf, 1, dolSize, targetDol);
     fclose(targetDol);
 
