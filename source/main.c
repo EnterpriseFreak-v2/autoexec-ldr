@@ -1,7 +1,8 @@
-#include <gccore.h>
 #include <stdio.h>
+#include <gccore.h>
 #include <string.h>
 #include <malloc.h>
+
 #include <fat.h>
 #include <sdcard/gcsd.h>
 
@@ -21,12 +22,19 @@ typedef struct _dolheader {
 
 typedef void (*entrypoint) (void);
 
+void deinitFAT(void)
+{
+    fatUnmount("SD");
+    __io_gcsd2.shutdown();
+    __io_gcsdb.shutdown();
+}
+
 int main(int argc, char **argv)
 {
     u8 sdCardMounted = 0;
     u8 i = 0;
 
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < 0x0F; i++) {
         __io_gcsdb.startup();
         if (fatMountSimple("SD", &__io_gcsdb)) {
             sdCardMounted = 1;
@@ -41,6 +49,7 @@ int main(int argc, char **argv)
     }
 
     if (!sdCardMounted) {
+        deinitFAT();
         error("\t Failed to mount the SD card - Confirm that it's properly inserted.");
     }
 
@@ -49,6 +58,7 @@ int main(int argc, char **argv)
     char* dolBuf;
 
     if (!targetDol) {
+        deinitFAT();
         error("Can't open autoexec.dol in read mode. Check if it exists on the SD card.");
     }
 
@@ -57,21 +67,23 @@ int main(int argc, char **argv)
     fseek(targetDol, 0, SEEK_SET);
 
     dolBuf = (char*) malloc(sizeof(char)*dolSize);
+
     if (dolBuf == NULL) {
+        deinitFAT();
         error(" Error during memory allocation. The target autoexec.dol is probably too big.");
     }
 
     for (i = 0; i < 255; i++) {
-        fseek(targetDol, 16386*i, SEEK_SET);
-        fread(dolBuf + 16386*i, 16386, sizeof(char), targetDol);
-
-        if (i*16386 >= dolSize) {
+        if (i * 32768 >= dolSize)
             break;
-        }
+        
+        fseek(targetDol, i * 32768, SEEK_SET);
+        fread(dolBuf + (i * 32768), 1, 32768, targetDol);
     }
 
-    fread(dolBuf, 1, dolSize, targetDol);
-    fclose(targetDol);
+    //fread(dolBuf, 1, dolSize, targetDol);
+    fclose(targetDol); //Close the autoexec.dol file.
+    deinitFAT(); //Unmount the SD card and shutdown all storage devices
 
     u8* buf;
     u32 size = 0;
