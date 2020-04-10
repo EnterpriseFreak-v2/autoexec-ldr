@@ -5,6 +5,7 @@
 
 #include <fat.h>
 #include <sdcard/gcsd.h>
+#include <sdcard/card_io.h>
 
 #include "error.h"
 
@@ -37,6 +38,7 @@ int main(int argc, char **argv)
     for (i = 0; i < 0x0F; i++) {
         __io_gcsdb.startup();
         if (fatMountSimple("SD", &__io_gcsdb)) {
+            sdgecko_setSpeed(EXI_SPEED32MHZ); //Enable the 32MHz mode for slightly faster load speeds.
             sdCardMounted = 1;
             break;
         }
@@ -73,7 +75,8 @@ int main(int argc, char **argv)
         error(" Error during memory allocation. The target autoexec.dol is probably too big.");
     }
 
-    for (i = 0; i < 255; i++) {
+    //Read the autoexec.dol file into the buffer
+    for (i = 0; i <= 255; i++) {
         if (i * 32768 >= dolSize)
             break;
         
@@ -81,7 +84,6 @@ int main(int argc, char **argv)
         fread(dolBuf + (i * 32768), 1, 32768, targetDol);
     }
 
-    //fread(dolBuf, 1, dolSize, targetDol);
     fclose(targetDol); //Close the autoexec.dol file.
     deinitFAT(); //Unmount the SD card and shutdown all storage devices
 
