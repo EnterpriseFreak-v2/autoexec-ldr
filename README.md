@@ -1,5 +1,16 @@
 # autoexec-ldr
-A minimal homebrew loader that can load and execute a autoexec.dol file from either a SD Gecko or SD2SP2.
+A minimal homebrew loader that can load and execute a autoexec.dol file from either a SD Gecko or SD2SP2. It is intended to be used together with savegame exploits.
+
+## Compatibility with savegame exploits
+
+| Game | Exploit | Status |
+|:----:|:-------:|:------:|
+|The Legend of Zelda: The Wind Waker|[ww-hack](https://github.com/FIX94/ww-hack-gc)|WORKS
+|The Legend of Zelda: Twilight Princess|[Twilight Hack](https://github.com/FIX94/twilight-hack-gc)|WORKS
+|007: Agent under Fire|[Exploit under Fire](https://github.com/FIX94/007-exploit-gc)|WORKS
+
+Please note this table is not complete yet- As more exploits are getting tested this table will get updated.
+
 
 If you don't have a GameCube that is able to run homebrew you can also use a Wii to get the files onto your Memory Card.
 ## Prerequisites (GameCube)
@@ -25,5 +36,7 @@ If you don't have a GameCube that is able to run homebrew you can also use a Wii
 - (Wii): Plug the now prepared SD / USB into the SD card slot / USB port.
 - Run GCMM using your current method of homebrew loading. (eg.: the Homebrew Channel on Wii)
 - In GCMM restore the savegame.gci to the Memory Card.
+
+ **WARNING: If you already have another homebrew as boot.dol on that memory card it will be overwritten!**
 - ???
 - Profit.
