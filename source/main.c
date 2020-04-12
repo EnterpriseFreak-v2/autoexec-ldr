@@ -2,6 +2,7 @@
 #include <gccore.h>
 #include <string.h>
 #include <malloc.h>
+#include <ogc/card.h>
 
 #include <fat.h>
 #include <sdcard/gcsd.h>
@@ -36,11 +37,14 @@ int main(int argc, char **argv)
     u8 i = 0;
 
     for (i = 0; i < 0x0F; i++) {
-        __io_gcsdb.startup();
-        if (fatMountSimple("SD", &__io_gcsdb)) {
-            sdgecko_setSpeed(EXI_SPEED32MHZ); //Enable the 32MHz mode for slightly faster load speeds.
-            sdCardMounted = 1;
-            break;
+        //Only try to mount a SD card in Slot B if we detect an invalid device (aka NOT a GC memory card) connected.
+        if (CARD_Probe(CARD_SLOTB) == CARD_ERROR_WRONGDEVICE) {
+            __io_gcsdb.startup();
+            if (fatMountSimple("SD", &__io_gcsdb)) {
+                sdgecko_setSpeed(EXI_SPEED32MHZ); //Enable the 32MHz mode for slightly faster load speeds.
+                sdCardMounted = 1;
+                break;    
+            }
         }
 
         __io_gcsd2.startup();

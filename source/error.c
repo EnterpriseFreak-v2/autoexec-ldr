@@ -1,5 +1,6 @@
 #include <gccore.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static void *xfb = NULL;
 static GXRModeObj *rmode = NULL;
@@ -24,9 +25,15 @@ void error(const char *msg)
     iprintf("\t%s\n\n", msg);
 
 	iprintf("\x1b[5;5HRestart the console and confirm that potential error causes are fixed.\n");
-	iprintf("\tIf you performed an IGR your SD adapter might not have become ready again.");
+	iprintf("\tIf you performed an IGR your SD adapter might not have become ready again.\n\n");
+	iprintf("\x1b[11;21H- Press RESET to restart the console -");
 
     for(;;) {
         VIDEO_WaitVSync();
+
+		if (SYS_ResetButtonDown()) {
+			SYS_ResetSystem(SYS_RESTART, 0, 0);
+			exit(0);
+		}
     }
 }
