@@ -18,7 +18,6 @@ include $(DEVKITPPC)/gamecube_rules
 TARGET		:=	autoexec-ldr
 BUILD		:=	build
 SOURCES		:=	source
-DATA		:=	data
 INCLUDES	:=	include
 
 #---------------------------------------------------------------------------------

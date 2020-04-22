@@ -9,6 +9,7 @@
 #include <sdcard/card_io.h>
 
 #include "error.h"
+#include "defines.h"
 
 typedef struct _dolheader {
 	u32 text_pos[7];
@@ -27,6 +28,7 @@ typedef void (*entrypoint) (void);
 void deinitFAT(void)
 {
     fatUnmount("SD");
+    __io_gcsda.shutdown();
     __io_gcsd2.shutdown();
     __io_gcsdb.shutdown();
 }
@@ -36,15 +38,23 @@ int main(int argc, char **argv)
     u8 sdCardMounted = 0;
     u8 i = 0;
 
+    #ifdef BOOTDISK
+    initVideo();
+    #endif
+
     for (i = 0; i < 0x0F; i++) {
-        //Only try to mount a SD card in Slot B if we detect an invalid device (aka NOT a GC memory card) connected.
-        if (CARD_Probe(CARD_SLOTB) == CARD_ERROR_WRONGDEVICE) {
-            __io_gcsdb.startup();
-            if (fatMountSimple("SD", &__io_gcsdb)) {
-                sdgecko_setSpeed(EXI_SPEED32MHZ); //Enable the 32MHz mode for slightly faster load speeds.
-                sdCardMounted = 1;
-                break;    
-            }
+        __io_gcsda.startup();
+        if (fatMountSimple("SD", &__io_gcsda)) {
+            sdgecko_setSpeed(EXI_SPEED32MHZ); //Enable the 32MHz mode for slightly faster load speeds.
+            sdCardMounted = 1;
+            break;    
+        }
+
+        __io_gcsdb.startup();
+        if (fatMountSimple("SD", &__io_gcsdb)) {
+            sdgecko_setSpeed(EXI_SPEED32MHZ); //Enable the 32MHz mode for slightly faster load speeds.
+            sdCardMounted = 1;
+            break;    
         }
 
         __io_gcsd2.startup();
@@ -83,6 +93,12 @@ int main(int argc, char **argv)
     for (i = 0; i <= 255; i++) {
         if (i * 32768 >= dolSize)
             break;
+
+        #ifdef BOOTDISK
+        iprintf("\x1b[7;15HLoading autoexec.dol, please wait! %04d / %04d KB.", (32768 * i) / 1024, dolSize / 1024);
+        VIDEO_WaitVSync();
+        #endif
+
         
         fseek(targetDol, i * 32768, SEEK_SET);
         fread(dolBuf + (i * 32768), 1, 32768, targetDol);
@@ -119,7 +135,8 @@ int main(int argc, char **argv)
         ICInvalidateRange(buf, size);
     }
 
-    free(dolBuf);
+    if (dolBuf != NULL)
+        free(dolBuf);
 
     SYS_ResetSystem(SYS_SHUTDOWN, 0, 0);
     entrypoint entry = (entrypoint) dol -> entry_point;
