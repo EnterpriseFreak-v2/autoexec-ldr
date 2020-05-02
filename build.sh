@@ -9,6 +9,7 @@ mkdir tmp/disc
 
 # First, let's do the default build that will later be packed into the savegame.gci
 echo "" >> include/defines.h
+echo "#define builddate \""$(date)"\"" >> include/defines.h
 make -j3
 
 cp autoexec-ldr.dol tmp/
@@ -17,6 +18,7 @@ rm include/defines.h
 
 # Now let's build the version that is designed to be booted of a burned mini DVD.
 echo "#define BOOTDISK" >> include/defines.h
+echo "#define builddate \""$(date)"\"" >> include/defines.h
 make -j3
 
 cp autoexec-ldr.dol tmp/disc/boot.dol
@@ -25,6 +27,7 @@ rm include/defines.h
 
 # Finally burn a version that is intended to be used as a IGR.dol for swiss. This one will do no printing to produce a smaller dol.
 echo "#define IGR" >> include/defines.h
+echo "#define builddate \""$(date)"\"" >> include/defines.h
 make -j3
 
 cp autoexec-ldr.dol tmp/igr.dol

@@ -42,6 +42,7 @@ void error(const char *msg)
 	iprintf("\x1b[5;5HRestart the console and confirm that potential error causes are fixed.\n");
 	iprintf("\tIf you performed an IGR your SD adapter might not have become ready again.\n\n");
 	iprintf("\x1b[10;21H- Press RESET to restart the console -");
+	iprintf("\x1b[12;3HBuild: %s", builddate);
 
     for(;;) {
         VIDEO_WaitVSync();
