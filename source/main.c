@@ -2,6 +2,7 @@
 #include <gccore.h>
 #include <string.h>
 #include <malloc.h>
+#include <ogc/dvd.h>
 #include <ogc/card.h>
 
 #include <fat.h>
@@ -23,7 +24,14 @@ typedef struct _dolheader {
 	u32 entry_point;
 } dolheader;
 
+u8 DVD_StopFinished = 0;
+
 typedef void (*entrypoint) (void);
+
+void dvdStopFinished()
+{
+    DVD_StopFinished = 1;
+}
 
 void deinitFAT(void)
 {
@@ -37,10 +45,6 @@ int main(int argc, char **argv)
 {
     u8 sdCardMounted = 0;
     u8 i = 0;
-
-    #ifdef BOOTDISK
-    initVideo();
-    #endif
 
     for (i = 0; i < 0x0F; i++) {
         __io_gcsda.startup();
@@ -69,7 +73,54 @@ int main(int argc, char **argv)
         error("\t Failed to mount the SD card - Confirm that it's properly inserted.");
     }
 
-    FILE* targetDol = fopen("SD:/autoexec.dol", "rb");
+    //If we're running the bootdisk version of autoexec-ldr stop the DVD from spinning now.
+    //We don't need to do this for the savegame.gci version as dollz3 already stops the dvd drive.
+    #ifdef BOOTDISK
+    dvdcmdblk drv;
+    DVD_Init();
+    DVD_ControlDriveAsync(&drv, DVD_SPINMOTOR_DOWN, &dvdStopFinished);
+    #endif
+
+    #ifndef IGR
+    FILE *userVmodeCfg = fopen("SD:/autoexec-ldr/videomode.txt", "rb");
+
+    //If there is a videomode.txt in the autoexec-ldr directory set the video mode to what the user wants.
+    if (userVmodeCfg) {
+        u8 mode = fgetc(userVmodeCfg);
+        fclose(userVmodeCfg);
+
+        switch (mode) {
+            case '0': //240p 60 Hz NTSC
+                initVideo(&TVNtsc240Ds);
+                break;
+
+            case '1': //480i 60 Hz NTSC
+                initVideo(&TVNtsc480Int);
+                break;
+
+            case '2': //480p 60 Hz NTSC /!\ REQUIRES COMPONENT CABLE TO WORK !!!!
+                initVideo(&TVNtsc480Prog);
+                break;
+
+            case '3': //528i 50 Hz PAL50 
+                initVideo(&TVPal528Int);
+                break;
+
+            case '4': //480i 60 Hz RGB Scart PAL60
+                initVideo(&TVEurgb60Hz480Int);
+                break;
+
+            default: //240p NTSC 60 Hz fallback
+                initVideo(NULL);
+                break;
+        }
+    }
+    else {
+        initVideo(NULL);
+    }
+    #endif
+
+    FILE* targetDol = fopen("SD:/autoexec-ldr/autoexec.dol", "rb");
     u32 dolSize = 0;
     char* dolBuf;
 
@@ -106,6 +157,16 @@ int main(int argc, char **argv)
 
     fclose(targetDol); //Close the autoexec.dol file.
     deinitFAT(); //Unmount the SD card and shutdown all storage devices
+
+    #ifdef BOOTDISK
+    if (DVD_StopFinished == 0) {
+        iprintf("\x1b[8;24HWaiting for DVD drive to stop...");
+    }
+
+    while (DVD_StopFinished == 0) {
+        VIDEO_WaitVSync();
+    }
+    #endif
 
     u8* buf;
     u32 size = 0;

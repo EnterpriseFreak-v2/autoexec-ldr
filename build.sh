@@ -25,7 +25,7 @@ cp autoexec-ldr.dol tmp/disc/boot.dol
 make clean
 rm include/defines.h
 
-# Finally burn a version that is intended to be used as a IGR.dol for swiss. This one will do no printing to produce a smaller dol.
+# Finally build a version that is intended to be used as a IGR.dol for swiss. This one will do no printing to produce a smaller dol.
 echo "#define IGR" >> include/defines.h
 echo "#define builddate \""$(date)"\"" >> include/defines.h
 make -j3
